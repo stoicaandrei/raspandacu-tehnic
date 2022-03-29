@@ -1,0 +1,21 @@
+{
+  "extends": ["next/core-web-vitals", "prettier"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": 2,
+    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+    "import/namespace": "error",
+    "import/default": "error",
+    "import/export": "error",
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "parent", "sibling", "index"],
+        "alphabetize": {
+          "order": "asc"
+        }
+      }
+    ],
+    "react/display-name": "off"
+  }
+}
