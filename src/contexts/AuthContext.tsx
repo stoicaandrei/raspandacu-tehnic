@@ -1,10 +1,10 @@
 import {
   User as AuthUser,
-  GoogleAuthProvider,
-  signInWithPopup,
   signOut,
+  signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { createContext, ReactNode, useContext } from 'react';
+import { useRouter } from 'next/router';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
 import { useAuth, useSigninCheck } from 'reactfire';
 
 type State = {
@@ -15,7 +15,7 @@ type State = {
 export const AuthStateContext = createContext<State | undefined>(undefined);
 
 type Actions = {
-  signInWithGoogle: () => void;
+  signIn: (email: string, password: string) => void;
   signOut: () => void;
 };
 export const AuthActionsContext = createContext<Actions | undefined>(undefined);
@@ -26,11 +26,22 @@ type Props = {
 
 const AuthProvider = ({ children }: Props) => {
   const auth = useAuth();
+  const router = useRouter();
+  const isAdminRoute = router.pathname.startsWith('/admin');
 
   const { data, status, error } = useSigninCheck();
+  const user = data?.user;
 
-  const signInWithGoogle = () =>
-    signInWithPopup(auth, new GoogleAuthProvider());
+  const signIn = (email: string, password: string) =>
+    signInWithEmailAndPassword(auth, email, password);
+
+  useEffect(() => {
+    if (!isAdminRoute) return;
+    if (status === 'loading') return;
+
+    if (user && router.pathname === '/admin/signin') router.replace('/admin');
+    else if (!user) router.replace('/admin/signin');
+  }, [user]);
 
   const state: State = {
     user: data?.user,
@@ -39,14 +50,14 @@ const AuthProvider = ({ children }: Props) => {
   };
 
   const actions: Actions = {
-    signInWithGoogle,
+    signIn,
     signOut: () => signOut(auth),
   };
 
   return (
     <AuthStateContext.Provider value={state}>
       <AuthActionsContext.Provider value={actions}>
-        {state.loading ? 'Loading...' : children}
+        {isAdminRoute && state.loading ? 'Loading...' : children}
       </AuthActionsContext.Provider>
     </AuthStateContext.Provider>
   );
